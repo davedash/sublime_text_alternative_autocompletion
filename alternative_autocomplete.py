@@ -54,8 +54,8 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         self.edit = edit
         self.show_panel(self.on_choise_insert)
 
-    def suggestions(self, position, text):
-        prefix_match = re.search(r'([\w\d_]+)\Z', text[0:position], re.M | re.U)
+    def suggestions(self, position, text, text_currentbuffer):
+        prefix_match = re.search(r'([\w\d_]+)\Z', text_currentbuffer[0:position], re.M | re.U)
         if prefix_match:
             prefix = prefix_match.group(1)
         self.p = prefix_match
@@ -63,8 +63,17 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         return candidates
 
     def show_panel(self, callback):
-        self.suggestions_list = self.suggestions(self.view.sel()[0].b,
-        self.view.substr(sublime.Region(0, self.view.size())))
+    	textfor = lambda view: view.substr(sublime.Region(0, view.size()))
+    	# for some reason
+    	# "textfor(v) for v in w.views() for w in sublime.windows()" doesn't
+    	text = ''
+    	for w in sublime.windows():
+    		for v in w.views():
+    			text += textfor(v)
+        self.suggestions_list = self.suggestions(
+        	self.view.sel()[0].b,
+        	text,
+        	self.view.substr(sublime.Region(0, self.view.size())))
         self.view.window().show_quick_panel(self.suggestions_list, callback)
 
     def on_choise_insert(self, choise):
